@@ -1,7 +1,13 @@
 <?php
     include '../app/ProductsController.php';
+    include "../app/BrandController.php";
+
     $producto = new ProductsController();
+    $brandController = new BrandController();
+
     $productos = $producto -> getProducts();
+    $brands = $brandController->getBrands();
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -9,7 +15,7 @@
     <?php include "../layouts/head.php" ?>
 </head>
 <body>
-    <!-- navbar -->
+    <!-- nadvar -->
     <?php include "../layouts/nadvar.php" ?>
 
     <!-- container -->
@@ -19,129 +25,122 @@
             <!-- sidebar -->
             <?php include "../layouts/sidebar.php" ?>
 
-            <!-- contenido -->
+            <!-- contentido -->
             <div class="col-lg-10 col-sm-12 bg-white">
 
-                <!--bead-->
+                <!-- bread -->
                 <div class="border-bottom">
                     <div class="row m-2">
                         <div class="col">
                             <h4>Productos</h4>
                         </div>
                         <div class="col">
-                            <button class="btn btn-info float-end" data-bs-toggle="modal" data-bs-target="#modalAñadir">Añadir producto</button>
+                            <button class="btn btn-info float-end" data-bs-toggle="modal" data-bs-target="#modalAñadirEditar" onclick="addProduct(this)">Añadir producto</button>
                         </div>
                     </div>
                 </div>
+
+                <!-- card -->
                 <div class="row">
-                    <?php foreach ($productos as $key => $item): ?> 
-                        <div class="col-md-3 col-sm-10 p-2 ">
-                            <div class="card mb-1 ">
-                                <img src="<?php echo $item->cover ?>" class="card-img-top" alt="...">
-                                <div class="card-body">
-                                    <h5 class="card-title text-center"><?php echo $item->name ?></h5>
-                                    <h6 class="card-subtitle text-center"><i><?php echo $item->categories[0]->name ?></i></h6>
-                                    <p class="card-text" style="text-align: justify;"><?php echo $item->description ?></p>
-                                    <div class="row">
-                                        <a class="btn btn-warning col-6" data-bs-toggle="modal" data-bs-target="#modalEditar" onclick="editProducto(this)" data-products='<?= json_encode($product) ?>'>Editar</a>
-                                        <a href="#" class="btn btn-danger col-6" onclick="remove(this)">Eliminar</a>
-                                        <a href="details.php?<?= $product->slug ?>" class="btn btn-info col-12">Detalles</a>
+                    <?php if (isset($productos) && count($productos)>0): ?>
+                        <?php foreach ($productos as $producto): ?>  
+                            <div class="col-sm-6 col-xl-4 col-xxl-3 p-2">
+                                <div class="card mb-1 ">
+                                <img src="<?= $producto->cover ?>" class="card-img-top img-fluid" alt="...">
+                                    <div class="card-body">
+                                        <h5 class="card-title text-center"><?php echo $producto->name ?></h5>
+                                        <h6 class="card-subtitle text-center"><?= isset($producto->brand->name)?$producto->brand->name:'No Brand' ?></h6>
+                                        <p class="card-text" style="text-align: justify;"><?php echo $producto->description ?></p>
+                                        <div class="row">
+                                            <a data-product='<?= json_encode($producto) ?>' href="#" class="btn btn-warning col-6" data-bs-toggle="modal" data-bs-target="#modalAñadirEditar" onclick="editProduct(this)">Editar</a>
+                                            <a href="#" class="btn btn-danger col-6" onclick="remove(<?= $producto->id ?>)">Eliminar</a>
+                                            <a href="details.php?slug=<?= $producto->slug ?>" class="btn btn-info col-12">Detalles</a>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    <?php endforeach; ?>
+                        <?php endforeach ?> 
+                    <?php endif ?>
                 </div>
                 
             </div>
         </div>
     </div>
-    <!-- modalAñadir -->
-    <div class="modal fade" id="modalAñadir" tabindex="-1" aria-labelledby="modalAñadirLabel" aria-hidden="true">
+
+    <!-- modalAñadirEditar -->
+    <div class="modal fade" id="modalAñadirEditar" tabindex="-1" aria-labelledby="modalAñadirEditarLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="modalAñadirLabel">modalAñadir</h5>
+                <h5 class="modal-title" id="modalAñadirEditarLabel">Modal title</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form  enctype="multipart/form-data"  method="post" action="../app/ProductsController.php">
+            <form enctype="multipart/form-data"  method="post" action="../app/ProductsController.php">
                 <div class="modal-body">
                     <div class="input-group mb-3">
-                        <span class="input-group-text" id="basic-addon1">Titulo</span>
-                        <input type="text" name="name" class="form-control" placeholder="Name" aria-label="Username" aria-describedby="basic-addon1">
+                        <span class="input-group-text" id="basic-addon1">Name</span>
+                        <input type="text" id="name" name="name" class="form-control" placeholder="Product name" aria-label="Username" aria-describedby="basic-addon1">
                     </div>
                     <div class="input-group mb-3">
-                        <span class="input-group-text" id="basic-addon1">Slug</span>
-                        <input type="text" name="slug" class="form-control" placeholder="Slug" aria-label="Username" aria-describedby="basic-addon1">
+                      <span class="input-group-text" id="basic-addon1">Slug</span>
+                      <input id="slug" name="slug" type="text" class="form-control" placeholder="Product slug" aria-label="Username" aria-describedby="basic-addon1">
                     </div>
                     <div class="input-group mb-3">
-                        <span class="input-group-text" id="basic-addon1">Descripcion</span>
-                        <input type="text" name="description" class="form-control" placeholder="Description" aria-label="Username" aria-describedby="basic-addon1">
+                        <span class="input-group-text" id="basic-addon1">Description</span>
+                        <input type="text" id="description" name="description" class="form-control" placeholder="Product description" aria-label="Username" aria-describedby="basic-addon1">
                     </div>
                     <div class="input-group mb-3">
-                        <span class="input-group-text" id="basic-addon1">Caracteristicas</span>
-                        <input type="text" name="features" class="form-control" placeholder="Features" aria-label="Username" aria-describedby="basic-addon1">
+                        <span class="input-group-text" id="basic-addon1">Features</span>
+                        <input type="text" id="features" name="features" class="form-control" placeholder="Product features" aria-label="Username" aria-describedby="basic-addon1">
                     </div>
                     <div class="input-group mb-3">
-                        <span class="input-group-text" id="basic-addon1">ID</span>
-                        <input type="text" name="brand_id" class="form-control" placeholder="Brand_id" aria-label="Username" aria-describedby="basic-addon1">
+                        <span class="input-group-text" id="basic-addon1">Brand_id</span>
+                        <select class="form-control" id="brand_id" name="brand_id">
+                            <?php if (isset($brands) && count($brands)): ?> 
+                            <?php foreach ($brands as $brand): ?>
+                                <option value="<?= $brand->id ?>">
+                                    <?= $brand->name ?>
+                                </option>
+                            <?php endforeach ?>
+                            <?php endif ?>
+                        </select> 
                     </div>
                     <div class="input-group mb-3">
-                        <span class="input-group-text" id="basic-addon1">Imagen</span>
-                        <input name="cover" type="file">
-                    </div>
+					  <span class="input-group-text" id="basic-addon1">@</span>
+					  <input name="cover" type="file" class="form-control" placeholder="Product features" aria-label="Username" aria-describedby="basic-addon1">
+					</div>
                 </div>
-
-                <input type="hidden" name="action" value="create" id="oculto_input">
-
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="submit" class="btn btn-primary">Save changes</button>
-            </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+                <input type="hidden" id="oculto_input" name="action" value="create">
+                <input type="hidden" id="id" name="id" value="create">
             </form>
-            </div>
-        </div>
-    </div>
-    <!-- modalEditar -->
-    <div class="modal fade" id="modalEditar" tabindex="-1" aria-labelledby="modalEditarLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalEditar">modalEditar</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <?php for ($i=0; $i < 6; $i++) {?> 
-                    <div class="input-group mb-3">
-                      <label class="text-center">
-                          Correo electronico
-                      </label>
-                      <span class="input-group-text" id="basic-addon1">@</span>
-                      <input type="text" class="form-control" placeholder="Correo@examp.com" aria-label="Username" aria-describedby="basic-addon1">
-                  </div>
-                <?php } ?> 
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary">Save changes</button>
-            </div>
             </div>
         </div>
     </div>
 
     <?php include "../layouts/scripts.php" ?>
+    
     <script>
-        function addProducto(target){
+        function addProduct(target){
             document.getElementById("oculto_input").value="create";
         }
-        function editProducto(target){
-            document.getElementById("oculto_input").value="create";
-            let product = JSON.parse(target.getAtrribute)
-        }
+        function editProduct(target){
+            document.getElementById("oculto_input").value="update";
+            let product = JSON.parse(target.getAttribute('data-product'));
+            console.log(product.name);
+            document.getElementById("name").value=product.name;
+            document.getElementById("slug").value=product.slug;
+            document.getElementById("description").value=product.description;
+            document.getElementById("features").value=product.features;
+            document.getElementById("brand_id").value=product.brand_id;
+            document.getElementById("id").value=product.id;
 
-    </script>
-    <script>
-        function remove (target) {
+        }
+        function remove (id) {
+            
             swal({
             title: "Are you sure?",
             text: "Once deleted, you will not be able to recover this imaginary file!",
@@ -154,6 +153,21 @@
                 swal("Poof! Your imaginary file has been deleted!", {
                 icon: "success",
                 });
+
+                var bodyFromData = new FormData();
+
+                bodyFromData.append('id',id);
+                bodyFromData.append('action','delete');
+
+                axios.post('../app/ProductsController.php',bodyFromData)
+                .then(function (response){
+                    console.log(response);
+                })
+                .catch(function (error){
+                    console.log(error);
+                })
+
+                
             } else {
                 swal("Your imaginary file is safe!");
             }
